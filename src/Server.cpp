@@ -11,7 +11,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
     }
     else if (pattern == "\\w"){
 	for(char c : input_line){
-		if (isalnum(c) || c == "_"){
+		if (isalnum(c) || c == '_'){
 			return true;
 			}
 		}
