@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cctype>
 
 bool match_pattern(const std::string& input_line, const std::string& pattern) {
     if (pattern.length() == 1) {
@@ -9,7 +10,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
 	return input_line.find_first_of("1234567890") != std::string::npos;
     }
     else if (pattern == "\\w"){
-	for(c : input_line){
+	for(c:input_line){
 		if (isalnum(c) || c == "_"){
 			return 0;
 			}
