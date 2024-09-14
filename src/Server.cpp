@@ -8,6 +8,14 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
     else if (pattern == "\\d"){
 	return input_line.find_first_of("1234567890") != std::string::npos;
     }
+    else if (pattern == "\\w"){
+	for(c : input_line){
+		if (isalnum(c) || c == "_"){
+			return 0;
+			}
+		}
+	return 1;
+    }
     else {
         throw std::runtime_error("Unhandled pattern " + pattern);
     }
