@@ -10,7 +10,7 @@ bool is_word(char c) {
 }
 bool match_pattern(const std::string& input_line, const std::string& pattern) {
     size_t inp_pos = 0,patt_pos = 0;
-    size_t inp_len = input.line.size();
+    size_t inp_len = input_line.size();
     size_t patt_len = pattern.size();
     while (inp_pos < inp_len && patt_pos < patt_len){
         if (pattern[patt_pos] == '\\'){
@@ -27,7 +27,8 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
                     if (!is_word(input_line[inp_pos])) {
                         return false;
                     }
-                    input_pos++;
+                    inp_pos++;
+		}
 		else{
 		    throw std::runtime_error("Unknown escape sequence!" + std::string(1, next));
 		}
@@ -54,7 +55,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
             inp_pos++;
             patt_pos = cb_pos + 1;
         } else {
-            if (input_text[input_pos] != pattern[patt_pos]) {
+            if (input_line[input_pos] != pattern[patt_pos]) {
                 return false;
             }
             inp_pos++;
