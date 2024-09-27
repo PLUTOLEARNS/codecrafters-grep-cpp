@@ -43,10 +43,9 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
             if (cb_pos == std::string::npos) {
                 throw std::runtime_error("Unmatched [ in pattern");
             }
-
             bool is_negated = (pattern[patt_pos + 1] == '^');
             std::string char_group = is_negated ? pattern.substr(patt_pos + 2, cb_pos - patt_pos - 2): pattern.substr(patt_pos + 1, cb_pos - patt_pos - 1);
-            bool found = (char_group.find(input_text[input_pos]) != std::string::npos);
+            bool found = (char_group.find(input_line[inp_pos]) != std::string::npos);
             if (is_negated && found) {
                 return false;
             } else if (!is_negated && !found) {
