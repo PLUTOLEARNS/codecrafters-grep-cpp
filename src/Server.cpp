@@ -13,8 +13,14 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
 
     if (patt_len == 0) return true;
     if (inp_len == 0) return false;
-    if (pattern[0] == '^' && pattern.size() > 1 && input_line[0] != pattern[1]) {
-        return false;
+    if (pattern[0] == '^') {
+        if (patt_len == 1) { // Pattern is just "^"
+            return false; // Empty input doesn't match "^"
+        }
+        if (input_line[0] != pattern[1]) {
+            return false;
+        }
+        return match_pattern(input_line.substr(1),pattern.substr(1)); 
     }
     if (pattern.substr(0, 2) == "\\d") {
         if (isdigit(input_line[0])) {
