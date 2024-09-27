@@ -60,7 +60,7 @@ bool match_sol(const string& input_line, const string& pattern) {
     if (pattern[0] == '^') {
         return match_pattern(input_line, pattern.substr(1));
     }
-    return match_patterns(input_line, pattern);
+    return match_pattern(input_line, pattern);
 }
 
 int main(int argc, char* argv[]) {
