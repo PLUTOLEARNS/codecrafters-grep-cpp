@@ -15,32 +15,32 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
     size_t inp_len = input_line.size();
     size_t patt_len = pattern.size();
 
-    while (inp_pos < inp_len && patt_pos < patt_len){
+    while (inp_pos < inp_len && patt_pos < patt_len) {
         if (pattern[patt_pos] == '\\') {
             if (patt_pos + 1 < patt_len) {
                 char next = pattern[patt_pos + 1];
 
                 if (next == 'd') {
-                    if (!is_digit(input_line[inp_pos])){
+                    if (!is_digit(input_line[inp_pos])) {
                         return false;
                     }
                     inp_pos++;
-                }
+                } 
 		else if (next == 'w') {
-                    if (!is_word(input_line[inp_pos])){
+                    if (!is_word(input_line[inp_pos])) {
                         return false;
                     }
                     inp_pos++;
-                }
-		else{
+                } 
+		else {
                     throw std::runtime_error("Unknown escape sequence: " + std::string(1, next));
                 }
                 patt_pos += 2;  // Move past the escape sequence
             }
         } 
-	else if (pattern[patt_pos] == '['){
+	else if (pattern[patt_pos] == '[') {
             size_t cb_pos = pattern.find(']', patt_pos);
-            if (cb_pos == std::string::npos){
+            if (cb_pos == std::string::npos) {
                 throw std::runtime_error("Unmatched [ in pattern");
             }
             bool is_negated = (pattern[patt_pos + 1] == '^');
@@ -51,14 +51,15 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
             if (is_negated && found) {
                 return false;
             } 
-	    else if (!is_negated && !found){
+	    else if (!is_negated && !found) {
                 return false;
             }
             inp_pos++;
             patt_pos = cb_pos + 1;  // Move past the closing bracket
         } 
 	else {
-            if (input_line[inp_pos] != pattern[patt_pos]){
+            // Handle literal characters like spaces or words (e.g., "apple")
+            if (input_line[inp_pos] != pattern[patt_pos]) {
                 return false;
             }
             inp_pos++;
