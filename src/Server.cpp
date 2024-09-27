@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     std::getline(std::cin, input_line);
 
     try {
-        if (match_sol(input_line, pattern)) {
+        if (match_patterns(input_line, pattern)) {
             return 0;
         } else {
             return 1;
