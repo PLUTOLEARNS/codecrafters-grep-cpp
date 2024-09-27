@@ -55,18 +55,16 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
     return match_pattern(input_line.substr(1), pattern);
 }
 
-bool match_patterns(const string& input_line, const string& pattern) {
-    if (pattern[0] == '^') {
-        return match_pattern(input_line, pattern.substr(1));
-    }
-    
-    for (size_t i = 0; i <= input_line.length(); ++i) {
-        if (match_pattern(input_line.substr(i), pattern)) {
+bool match_patterns(string input_line, string pattern) {
+    do {
+        if (match_pattern(input_line, pattern)) {
             return true;
         }
-    }
+        input_line = input_line.substr(1);  // move 1 step further
+    } while (input_line != "");
     return false;
 }
+
 
 int main(int argc, char* argv[]) {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
