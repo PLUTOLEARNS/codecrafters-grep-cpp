@@ -56,6 +56,9 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
 }
 
 bool match_patterns(string input_line, string pattern) {
+	if (pattern[0] == '^'){
+	    return match_pattern(input_line, pattern.substr(1));
+}
     do {
         if (match_pattern(input_line, pattern)) {
             return true;
