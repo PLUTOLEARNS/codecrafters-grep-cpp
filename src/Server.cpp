@@ -56,6 +56,12 @@ bool match_patterns(string input_line, string pattern) {
     } while (input_line != "");
     return false;
 }
+bool match_sol(const string& input_line, const string& pattern) {
+    if (pattern[0] == '^') {
+        return match_pattern(input_line, pattern.substr(1));
+    }
+    return match_patterns(input_line, pattern);
+}
 
 int main(int argc, char* argv[]) {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -79,7 +85,7 @@ int main(int argc, char* argv[]) {
     std::getline(std::cin, input_line);
 
     try {
-        if (match_patterns(input_line, pattern)) {
+        if (match_sol(input_line, pattern)) {
             return 0;
         } else {
             return 1;
