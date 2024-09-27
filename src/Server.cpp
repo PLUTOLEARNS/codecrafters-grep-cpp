@@ -17,21 +17,25 @@ bool match_pattern(const std::string& input_line, const std::string& pattern) {
 		}
 	return false;
     }
-    else if (pattern.at(0) == '[' && pattern.at(pattern.length() - 1) == ']') {
-        for (const auto &l : pattern.substr(1, pattern.length() - 2)) {
-            if (input_line.find(l) != std::string::npos) {
-                return true;
+     else if (pattern.at(0) == '[' && pattern.at(pattern.length() - 1) == ']') {
+        bool is_negative = (pattern.at(1) == '^');
+        std::string char_group = is_negative ? pattern.substr(2, pattern.length() - 3) : pattern.substr(1, pattern.length() - 2);
+        if (is_negative) {
+            for (char c : input_line) {
+                if (char_group.find(c) == std::string::npos) {
+                    return true;
+                }
             }
-        }
-        return false;
-    }
-    else if (pattern.at(0) == '[' && pattern.at(1) == '^' && pattern.at(pattern.length()-1) == ']') {
-	for (const auto &l : pattern.substr(2, pattern.length() - 3)) {
-            if (input_line.find(l) == std::string::npos) {
-                return true;
+            return false;
+        } 
+        else {
+            for (char c : input_line) {
+                if (char_group.find(c) != std::string::npos) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
     }
     else {
         throw std::runtime_error("Unhandled pattern " + pattern);
