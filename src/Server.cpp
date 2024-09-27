@@ -2,45 +2,70 @@
 #include <string>
 #include <cctype>
 
+bool is_digit(char c) {
+    return std::isdigit(static_cast<unsigned char>(c));
+}
+bool is_word(char c) {
+    return std::isalnum(static_cast<unsigned char>(c));
+}
 bool match_pattern(const std::string& input_line, const std::string& pattern) {
-    if (pattern.length() == 1) {
-        return input_line.find(pattern) != std::string::npos;
-    }
-    else if (pattern == "\\d"){
-	return input_line.find_first_of("1234567890") != std::string::npos;
-    }
-    else if (pattern == "\\w"){
-	for(char c : input_line){
-		if (isalnum(c) || c == '_'){
-			return true;
-			}
+    size_t inp_pos = 0,patt_pos = 0;
+    size_t inp_len = input.line.size();
+    size_t patt_len = pattern.size();
+    while (inp_pos < inp_len && patt_pos < patt_len){
+        if (pattern[patt_pos] == '\\'){
+	    if(patt_pos+1 < patt_len) {
+		char next = pattern[patt_pos+1];
+		
+		if (next == 'd') {
+		    if (!is_digit(input_line[inp_pos])) {
+			return false;
+		    }
+		    inp_pos++;
 		}
-	return false;
+		else if (next == 'w') {
+                    if (!is_word(input_line[inp_pos])) {
+                        return false;
+                    }
+                    input_pos++;
+		else{
+		    throw std::runtime_error("Unknown escape sequence!" + std::string(1, next));
+		}
+	   }
+	   patt_pos += 2;
+	}
+	else {
+	    return false;
+	}
     }
-     else if (pattern.at(0) == '[' && pattern.at(pattern.length() - 1) == ']') {
-        bool is_negative = (pattern.at(1) == '^');
-        std::string char_group = is_negative ? pattern.substr(2, pattern.length() - 3) : pattern.substr(1, pattern.length() - 2);
-        if (is_negative) {
-            for (char c : input_line) {
-                if (char_group.find(c) == std::string::npos) {
-                    return true;
-                }
+    else if(pattern[patt_pos] == '[') {
+	size_t cb_pos = pattern.find(']', patt_pos);
+            if (cb_pos == std::string::npos) {
+                throw std::runtime_error("Unmatched [ in pattern");
             }
-            return false;
-        } 
-        else {
-            for (char c : input_line) {
-                if (char_group.find(c) != std::string::npos) {
-                    return true;
-                }
+
+            bool is_negated = (pattern[patt_pos + 1] == '^');
+            std::string char_group = is_negated ? pattern.substr(patt_pos + 2, cb_pos - patt_pos - 2): pattern.substr(patt_pos + 1, cb_pos - patt_pos - 1);
+            bool found = (char_group.find(input_text[input_pos]) != std::string::npos);
+            if (is_negated && found) {
+                return false;
+            } else if (!is_negated && !found) {
+                return false;
             }
-            return false;
+            inp_pos++;
+            patt_pos = cb_pos + 1;
+        } else {
+            if (input_text[input_pos] != pattern[patt_pos]) {
+                return false;
+            }
+            inp_pos++;
+            patt_pos++;
         }
     }
-    else {
-        throw std::runtime_error("Unhandled pattern " + pattern);
-    }
+
+    return inp_pos == inp_len && patt_pos ==patt_len;
 }
+
 
 int main(int argc, char* argv[]) {
     // Flush after every std::cout / std::cerr
