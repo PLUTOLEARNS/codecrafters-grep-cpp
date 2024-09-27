@@ -61,7 +61,7 @@ Expand 19 lines
     std::getline(std::cin, input_line);
     
     try {
-        if (match_patterns(input_line, pattern)) {
+        if (match_pattern(input_line, pattern)) {
             return 0;
         } else {
             return 1;
