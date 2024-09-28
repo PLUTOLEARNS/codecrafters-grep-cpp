@@ -37,7 +37,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     }
     while (i < inp_len && j < patt_len) {
         if (j + 1 < patt_len && pattern[j + 1] == '+') {
-            if (!match_one_or_more(input.substr(i), pattern[j])) {
+            if (!match_one_or_more(input_line.substr(i), pattern[j])) {
                 return false;
             }
             while (i < inp_len && input_line[i] == pattern[j]) {
