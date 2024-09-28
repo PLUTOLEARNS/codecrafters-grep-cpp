@@ -105,8 +105,8 @@ bool match_alternation(const string& input_line, const string& pattern, bool anc
     if (pipe == string::npos) {
         return match_pattern(input_line, pattern, anchored);
     }
-    string first = pattern.substr(0, pipe_pos);
-    string second = pattern.substr(pipe_pos + 1);
+    string first = pattern.substr(0, pipe);
+    string second = pattern.substr(pipe + 1);
 
     return match_pattern(input_line, first, anchored) || match_pattern(input_line, second, anchored);
 }
