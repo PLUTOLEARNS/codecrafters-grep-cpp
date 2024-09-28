@@ -7,7 +7,7 @@ bool match_group(const string& input_line, const string& pattern) {
     return input_line.find_first_of(pattern) != string::npos;
 }
 
-bool match_pattern(const string& input_line, const string& pattern, bool anchored = false);
+bool match_pattern(const string& input_line, const string& pattern, bool anchored);
 
 bool match_alternation(const string& input_line, const string& pattern, bool anchored = false) {
     size_t pipe = pattern.find('|');
