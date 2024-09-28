@@ -34,24 +34,34 @@ bool match_alternation(const string& input_line, const string& pattern, bool anc
 }
 
 bool match_pattern(const string& input_line, const string& pattern, bool anchored, vector<string>& captures) {
-    size_t inp_len = input_line.size();
-    size_t patt_len = pattern.size();
-
-    if (patt_len == 0) return true;
-    if (inp_len == 0) return false;
+    if (pattern.empty()) return true;
+    if (input_line.empty()) return pattern.empty();
 
     if (pattern[0] == '(') {
-        size_t closing_paren = pattern.find(')');
-        if (closing_paren != string::npos) {
-            string captured;
-            bool match = match_pattern(input_line, pattern.substr(1, closing_paren - 1), anchored, captures);
-            if (match) {
-                captured = input_line.substr(0, closing_paren - 1);
-                captures.push_back(captured);
-                return match_pattern(input_line.substr(captured.length()), pattern.substr(closing_paren + 1), anchored, captures);
+        size_t closing_paren = 1;
+        size_t nested = 0;
+        for (size_t i = 1; i < pattern.size(); ++i) {
+            if (pattern[i] == '(') ++nested;
+            if (pattern[i] == ')') {
+                if (nested == 0) {
+                    closing_paren = i;
+                    break;
+                }
+                --nested;
             }
-            return false;
         }
+        if (closing_paren < pattern.size()) {
+            for (size_t i = 0; i <= input_line.size(); ++i) {
+                vector<string> temp_captures = captures;
+                if (match_pattern(input_line.substr(0, i), pattern.substr(1, closing_paren - 1), false, temp_captures) &&
+                    match_pattern(input_line.substr(i), pattern.substr(closing_paren + 1), anchored, temp_captures)) {
+                    temp_captures.push_back(input_line.substr(0, i));
+                    captures = temp_captures;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     if (pattern[0] == '\\' && isdigit(pattern[1])) {
@@ -73,79 +83,22 @@ bool match_pattern(const string& input_line, const string& pattern, bool anchore
         return match_pattern(input_line, pattern.substr(1), true, captures);
     }
 
-    for (size_t i = 0; i < patt_len; ++i) {
-        if (pattern[i] == '+') {
-            if (i == 0) return false;
-            char preceding_char = pattern[i - 1];
-            size_t match_count = 0;
-            while (match_count < inp_len && input_line[match_count] == preceding_char) {
-                match_count++;
-            }
-            if (match_count == 0) return false;
-            return match_pattern(input_line.substr(match_count), pattern.substr(i + 1), anchored, captures);
-        }
+    if (pattern[0] == '$' && pattern.length() == 1) {
+        return input_line.empty();
     }
 
-    for (size_t j = 0; j < patt_len; ++j) {
-        if (pattern[j] == '?') {
-            if (j == 0) return false;
-            char preceding_char = pattern[j - 1];
-            if (inp_len > 0 && input_line[0] == preceding_char) {
-                return match_pattern(input_line.substr(1), pattern.substr(j + 1), anchored, captures);
-            } else {
-                return match_pattern(input_line, pattern.substr(j + 1), anchored, captures);
-            }
-        }
-    }
-
-    if (pattern[patt_len - 1] == '$') {
-        if (inp_len >= patt_len - 1 && input_line.substr(inp_len - (patt_len - 1)) == pattern.substr(0, patt_len - 1)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    if (pattern[0] == '.') {
-        if (inp_len > 0) {
-            return match_pattern(input_line.substr(1), pattern.substr(1), anchored, captures);
-        } else {
-            return false;
-        }
-    }
-
-    if (anchored && input_line.empty()) {
-        return false;
+    if (pattern[0] == '.' || pattern[0] == input_line[0]) {
+        return match_pattern(input_line.substr(1), pattern.substr(1), anchored, captures);
     }
 
     if (pattern.substr(0, 2) == "\\d") {
-        if (isdigit(input_line[0])) {
+        if (!input_line.empty() && isdigit(input_line[0])) {
             return match_pattern(input_line.substr(1), pattern.substr(2), anchored, captures);
         }
-        return false;
     } else if (pattern.substr(0, 2) == "\\w") {
-        if (isalnum(input_line[0])) {
+        if (!input_line.empty() && isalnum(input_line[0])) {
             return match_pattern(input_line.substr(1), pattern.substr(2), anchored, captures);
         }
-        return false;
-    } else if (pattern[0] == '[') {
-        auto first = pattern.find(']');
-        bool neg = pattern[1] == '^';
-        if (neg) {
-            if (!match_group(input_line, pattern.substr(2, first - 2))) {
-                return match_pattern(input_line.substr(1), pattern.substr(first + 1), anchored, captures);
-            }
-            return false;
-        }
-        if (match_group(input_line, pattern.substr(1, first - 1))) {
-            return match_pattern(input_line.substr(1), pattern.substr(first + 1), anchored, captures);
-        } else {
-            return false;
-        }
-    }
-
-    if (pattern[0] == input_line[0]) {
-        return match_pattern(input_line.substr(1), pattern.substr(1), anchored, captures);
     }
 
     if (!anchored && !input_line.empty()) {
@@ -157,16 +110,7 @@ bool match_pattern(const string& input_line, const string& pattern, bool anchore
 
 bool match_patterns(const string& input_line, const string& pattern) {
     vector<string> captures;
-    if (pattern[0] == '^') {
-        return match_pattern(input_line, pattern.substr(1), true, captures);
-    }
-
-    for (size_t i = 0; i < input_line.size(); ++i) {
-        if (match_pattern(input_line.substr(i), pattern, false, captures)) {
-            return true;
-        }
-    }
-    return false;
+    return match_pattern(input_line, pattern, false, captures);
 }
 
 int main(int argc, char* argv[]) {
