@@ -31,6 +31,17 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
             return match_pattern(input_line.substr(match_count), pattern.substr(i + 1), anchored);
         }
     }
+    for (size_t j = 0; j < patt_len; ++j) {
+        if (pattern[j] == '?') {
+            if (j == 0) return false;
+            char preceding_char = pattern[j - 1];
+            if (inp_len > 0 && input_line[0] == preceding_char) {
+                return match_pattern(input_line.substr(1), pattern.substr(j + 1), anchored);
+            } else {
+                return match_pattern(input_line, pattern.substr(j + 1), anchored);
+            }
+        }
+    }
 
     if (pattern[patt_len - 1] == '$') {
         if (inp_len >= patt_len - 1 && input_line.substr(inp_len - (patt_len - 1)) == pattern.substr(0, patt_len - 1)) {
