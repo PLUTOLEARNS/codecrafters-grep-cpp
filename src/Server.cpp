@@ -7,23 +7,6 @@ bool match_group(const string& input_line, const string& pattern) {
     return input_line.find_first_of(pattern) != string::npos;
 }
 
-bool match_one_or_more(const string& input, char prev_char) {
-    size_t i = 0;
-
-    // Ensure the first character matches
-    if (input[i] != prev_char) {
-        return false;
-    }
-
-    // Continue matching while the character is the same
-    while (i < input.size() && input[i] == prev_char) {
-        i++;
-    }
-
-    // Return true if we found at least one match
-    return i > 0;
-}
-
 bool match_pattern(const std::string& input_line, const std::string& pattern, bool anchored = false) {
     size_t i = 0,j = 0;
     size_t inp_len = input_line.size();
@@ -35,21 +18,17 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     if (pattern[0] == '^') {
         return match_pattern(input_line, pattern.substr(1), true);
     }
-    while (i < inp_len && j < patt_len) {
-        if (j + 1 < patt_len && pattern[j + 1] == '+') {
-            if (!match_one_or_more(input_line.substr(i), pattern[j])) {
-                return false;
+    for (size_t i = 0; i < patt_len; ++i) {
+        if (pattern[i] == '+') {
+            if (i == 0) return false;
+
+            char preceding_char = pattern[i - 1];  // Character before the '+'
+            size_t match_count = 0;
+            while (match_count < inp_len && input_line[match_count] == preceding_char) {
+                match_count++;
             }
-            while (i < inp_len && input_line[i] == pattern[j]) {
-                i++;
-            }
-            j += 2;
-        }
-        else if (input_line[i] == pattern[j]) {
-            i++;
-            j++;
-        } else {
-            return false;
+            if (match_count == 0) return false;
+            return match_pattern(input_line.substr(match_count), pattern.substr(i + 1), anchored);
         }
     }
 
