@@ -35,12 +35,12 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     if (pattern[0] == '^') {
         return match_pattern(input_line, pattern.substr(1), true);
     }
-    while (i < inp_len && j < patt_len)) {
-        if (j + 1 < pattern.size() && pattern[j + 1] == '+') {
+    while (i < inp_len && j < patt_len) {
+        if (j + 1 < patt_len && pattern[j + 1] == '+') {
             if (!match_one_or_more(input.substr(i), pattern[j])) {
                 return false;
             }
-            while (i < input.size() && input[i] == pattern[j]) {
+            while (i < inp_len && input[i] == pattern[j]) {
                 i++;
             }
             j += 2;
