@@ -40,7 +40,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
             if (!match_one_or_more(input.substr(i), pattern[j])) {
                 return false;
             }
-            while (i < inp_len && input[i] == pattern[j]) {
+            while (i < inp_len && input_line[i] == pattern[j]) {
                 i++;
             }
             j += 2;
