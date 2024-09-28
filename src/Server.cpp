@@ -7,17 +7,6 @@ bool match_group(const string& input_line, const string& pattern) {
     return input_line.find_first_of(pattern) != string::npos;
 }
 
-bool match_alternation(const string& input_line, const string& pattern, bool anchored = false) {
-    size_t pipe = pattern.find('|');
-    if (pipe == string::npos) {
-        return match_pattern(input_line, pattern, anchored);
-    }
-    string first = pattern.substr(0, pipe_pos);
-    string second = pattern.substr(pipe_pos + 1);
-
-    return match_pattern(input_line, first, anchored) || match_pattern(input_line, second, anchored);
-}
-
 bool match_pattern(const std::string& input_line, const std::string& pattern, bool anchored = false) {
     size_t i = 0,j = 0;
     size_t inp_len = input_line.size();
@@ -109,6 +98,17 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     }
 
     return false;  // If the characters don't match
+}
+
+bool match_alternation(const string& input_line, const string& pattern, bool anchored = false) {
+    size_t pipe = pattern.find('|');
+    if (pipe == string::npos) {
+        return match_pattern(input_line, pattern, anchored);
+    }
+    string first = pattern.substr(0, pipe_pos);
+    string second = pattern.substr(pipe_pos + 1);
+
+    return match_pattern(input_line, first, anchored) || match_pattern(input_line, second, anchored);
 }
 
 bool match_patterns(const std::string& input_line, const std::string& pattern) {
