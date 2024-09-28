@@ -25,6 +25,7 @@ bool match_one_or_more(const string& input, char prev_char) {
 }
 
 bool match_pattern(const std::string& input_line, const std::string& pattern, bool anchored = false) {
+    size_t i = 0,j = 0;
     size_t inp_len = input_line.size();
     size_t patt_len = pattern.size();
 
