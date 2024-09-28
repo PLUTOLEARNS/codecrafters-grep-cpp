@@ -50,6 +50,14 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
             return false;
         }
     }
+    if (pattern[0] == '.') {
+        if (inp_len > 0) {
+            // Skip one character in input_line and continue matching
+            return match_pattern(input_line.substr(1), pattern.substr(1), anchored);
+        } else {
+            return false;
+        }
+    }
 
     if (anchored && input_line.empty()) {
         return false;  // In case the input ends early when anchored
