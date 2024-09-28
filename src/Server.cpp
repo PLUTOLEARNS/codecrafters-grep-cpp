@@ -7,6 +7,23 @@ bool match_group(const string& input_line, const string& pattern) {
     return input_line.find_first_of(pattern) != string::npos;
 }
 
+bool match_one_or_more(const string& input, char prev_char) {
+    size_t i = 0;
+
+    // Ensure the first character matches
+    if (input[i] != prev_char) {
+        return false;
+    }
+
+    // Continue matching while the character is the same
+    while (i < input.size() && input[i] == prev_char) {
+        i++;
+    }
+
+    // Return true if we found at least one match
+    return i > 0;
+}
+
 bool match_pattern(const std::string& input_line, const std::string& pattern, bool anchored = false) {
     size_t inp_len = input_line.size();
     size_t patt_len = pattern.size();
@@ -17,6 +34,24 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     if (pattern[0] == '^') {
         return match_pattern(input_line, pattern.substr(1), true);
     }
+    while (i < input.size() && j < pattern.size()) {
+        if (j + 1 < pattern.size() && pattern[j + 1] == '+') {
+            if (!match_one_or_more(input.substr(i), pattern[j])) {
+                return false;
+            }
+            while (i < input.size() && input[i] == pattern[j]) {
+                i++;
+            }
+            j += 2;
+        }
+        else if (input[i] == pattern[j]) {
+            i++;
+            j++;
+        } else {
+            return false;
+        }
+    }
+
     if (pattern[patt_len - 1] == '$') {
         if (inp_len >= patt_len - 1 && input_line.substr(inp_len - (patt_len - 1)) == pattern.substr(0, patt_len - 1)) {
             return true;
