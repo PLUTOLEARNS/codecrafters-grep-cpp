@@ -30,7 +30,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
 
     if (pattern[0] == '(') {
         size_t close_p = pattern.find(')');
-        if (closing_paren != string::npos) {
+        if (close_p != string::npos) {
             return match_alternation(input_line, pattern.substr(1, close_p - 1), anchored) &&
                    match_pattern(input_line, pattern.substr(close_p + 1), anchored);
         }
