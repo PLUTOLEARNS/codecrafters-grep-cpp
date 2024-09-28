@@ -14,10 +14,15 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     if (patt_len == 0) return true;
     if (inp_len == 0) return false;
 
-    // Handle '^' anchor
     if (pattern[0] == '^') {
-        // Force pattern to match only at the beginning of input_line
         return match_pattern(input_line, pattern.substr(1), true);
+    }
+    if (pattern[patt_len - 1] == '$') {
+        if (inp_len >= patt_len - 1 && input_line.substr(inp_len - (patt_len - 1)) == pattern.substr(0, patt_len - 1)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     if (anchored && input_line.empty()) {
