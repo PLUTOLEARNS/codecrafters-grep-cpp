@@ -45,7 +45,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
             }
             j += 2;
         }
-        else if (input[i] == pattern[j]) {
+        else if (input_line[i] == pattern[j]) {
             i++;
             j++;
         } else {
