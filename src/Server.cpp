@@ -28,8 +28,12 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     if (patt_len == 0) return true;
     if (inp_len == 0) return false;
 
-    if (pattern.find('|') != string::npos) {
-        return match_alternation(input_line, pattern, anchored);
+    if (pattern[0] == '(') {
+        size_t close_p = pattern.find(')');
+        if (closing_paren != string::npos) {
+            return match_alternation(input_line, pattern.substr(1, close_p - 1), anchored) &&
+                   match_pattern(input_line, pattern.substr(close_p + 1), anchored);
+        }
     }
 
     if (pattern[0] == '^') {
