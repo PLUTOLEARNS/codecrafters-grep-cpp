@@ -63,7 +63,14 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
             return false;
         }
     }
-
+    if (pattern[0] == '\\') {
+        if (pattern[1] == '1') {
+            if (input_line.substr(0, inp_len) == input_line.substr(inp_len, inp_len)) {
+                return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
+            }
+            return false;
+        }
+    }
     if (pattern[0] == '^') {
         return match_pattern(input_line, pattern.substr(1), true);
     }
