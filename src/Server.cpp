@@ -10,7 +10,7 @@ bool match_group(const string& input_line, const string& pattern) {
     return input_line.find_first_of(pattern) != string::npos;
 }
 
-bool match_pattern(const std::string& input_line, const std::string& pattern, bool anchored);
+bool match_pattern(const std::string& input_line, const std::string& pattern, bool anchored = false);
 
 bool match_alternation(const string& input_line, const string& pattern, bool anchored = false) {
     size_t pipe = pattern.find('|');
@@ -27,15 +27,14 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     size_t patt_len = pattern.size();
     
     if (patt_len == 0) return true;
-    if (inp_len == 0) return false; 
+    if (inp_len == 0) return false;
     
-
     if (pattern[0] == '(') {
         size_t close_p = pattern.find(')');
         if (close_p != string::npos) {
             string group = pattern.substr(1, close_p - 1);
-            if (match_alternation(input_line, group, anchored)) {
-                captured_groups.push_back(input_line.substr(0, group.size()));  // Store captured group
+            if (group.size() <= inp_len && match_alternation(input_line, group, anchored)) {
+                captured_groups.push_back(input_line.substr(0, group.size()));
                 return match_pattern(input_line.substr(group.size()), pattern.substr(close_p + 1), anchored);
             } else {
                 return false;
@@ -44,10 +43,10 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     }
 
     if (pattern[0] == '\\' && isdigit(pattern[1])) {
-        int group_num = pattern[1] - '0';  // Get the captured group number
+        int group_num = pattern[1] - '0';
         if (group_num <= captured_groups.size()) {
-            string captured_group = captured_groups[group_num - 1];  // Get the captured group
-            if (input_line.substr(0, captured_group.size()) == captured_group) {
+            string captured_group = captured_groups[group_num - 1];
+            if (inp_len >= captured_group.size() && input_line.substr(0, captured_group.size()) == captured_group) {
                 return match_pattern(input_line.substr(captured_group.size()), pattern.substr(2), anchored);
             } else {
                 return false;
@@ -58,14 +57,12 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     }
 
     if (pattern[0] == '.') {
-        // Dot matches any character
         if (inp_len > 0) {
             return match_pattern(input_line.substr(1), pattern.substr(1), anchored);
         } else {
             return false;
         }
     }
-
 
     if (pattern[0] == '^') {
         return match_pattern(input_line, pattern.substr(1), true);
@@ -80,12 +77,12 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     }
 
     if (pattern.substr(0, 2) == "\\d") {
-        if (isdigit(input_line[0])) {
+        if (inp_len > 0 && isdigit(input_line[0])) {
             return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
         }
         return false;
     } else if (pattern.substr(0, 2) == "\\w") {
-        if (isalnum(input_line[0])) {
+        if (inp_len > 0 && isalnum(input_line[0])) {
             return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
         }
         return false;
@@ -119,20 +116,22 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
     if (pattern[0] == '[') {
         auto first = pattern.find(']');
         bool neg = pattern[1] == '^';
+        if (first == string::npos || first <= 1) return false;
+
         if (neg) {
-            if (!match_group(input_line, pattern.substr(2, first - 2))) {
+            if (inp_len > 0 && !match_group(input_line, pattern.substr(2, first - 2))) {
                 return match_pattern(input_line.substr(1), pattern.substr(first + 1), anchored);
             }
             return false;
         }
-        if (match_group(input_line, pattern.substr(1, first - 1))) {
+        if (inp_len > 0 && match_group(input_line, pattern.substr(1, first - 1))) {
             return match_pattern(input_line.substr(1), pattern.substr(first + 1), anchored);
         } else {
             return false;
         }
     }
 
-    if (pattern[0] == input_line[0]) {
+    if (inp_len > 0 && pattern[0] == input_line[0]) {
         return match_pattern(input_line.substr(1), pattern.substr(1), anchored);
     }
 
@@ -141,7 +140,6 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
 
 bool match_patterns(const std::string& input_line, const std::string& pattern) {
     if (pattern[0] == '^') {
-        // Match at the beginning of the line (anchored)
         return match_pattern(input_line, pattern);
     }
     for (size_t i = 0; i < input_line.size(); ++i) {
@@ -164,7 +162,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Expected first argument to be '-E'" << std::endl;
         return 1;
     }
-    // Get input from stdin
     std::string input_line;
     std::getline(std::cin, input_line);
     try {
