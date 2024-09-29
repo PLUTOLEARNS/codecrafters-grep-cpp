@@ -2,6 +2,7 @@
 #include <string>
 #include <cctype>
 #include <vector>
+#include <stdexcept>
 using namespace std;
 
 vector<string> captured_groups;
@@ -33,8 +34,8 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
         size_t close_p = pattern.find(')');
         if (close_p != string::npos) {
             string group = pattern.substr(1, close_p - 1);
-            for (size_t i = 0; i <= inp_len - group.size(); ++i) {
-                if (match_alternation(input_line.substr(i, group.size()), group)) {
+            for (size_t i = 0; i <= inp_len; ++i) {
+                if (i + group.size() <= inp_len && match_alternation(input_line.substr(i, group.size()), group)) {
                     captured_groups.push_back(input_line.substr(i, group.size()));
                     if (match_pattern(input_line.substr(i + group.size()), pattern.substr(close_p + 1), anchored)) {
                         return true;
@@ -47,9 +48,9 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
         }
     }
 
-    if (pattern[0] == '\\' && isdigit(pattern[1])) {
+    if (pattern[0] == '\\' && pattern.size() > 1 && isdigit(pattern[1])) {
         int group_num = pattern[1] - '0';
-        if (group_num <= captured_groups.size()) {
+        if (group_num > 0 && group_num <= static_cast<int>(captured_groups.size())) {
             string captured_group = captured_groups[group_num - 1];
             if (inp_len >= captured_group.size() && input_line.substr(0, captured_group.size()) == captured_group) {
                 return match_pattern(input_line.substr(captured_group.size()), pattern.substr(2), anchored);
@@ -78,16 +79,18 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
         }
     }
 
-    if (pattern.substr(0, 2) == "\\d") {
-        if (inp_len > 0 && isdigit(input_line[0])) {
-            return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
+    if (pattern.size() >= 2) {
+        if (pattern.substr(0, 2) == "\\d") {
+            if (inp_len > 0 && isdigit(input_line[0])) {
+                return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
+            }
+            return false;
+        } else if (pattern.substr(0, 2) == "\\w") {
+            if (inp_len > 0 && isalnum(input_line[0])) {
+                return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
+            }
+            return false;
         }
-        return false;
-    } else if (pattern.substr(0, 2) == "\\w") {
-        if (inp_len > 0 && isalnum(input_line[0])) {
-            return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
-        }
-        return false;
     }
 
     for (size_t j = 0; j < patt_len; ++j) {
@@ -117,7 +120,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
 
     if (pattern[0] == '[') {
         auto first = pattern.find(']');
-        bool neg = pattern[1] == '^';
+        bool neg = pattern.size() > 1 && pattern[1] == '^';
         if (first == string::npos || first <= 1) return false;
 
         if (neg) {
@@ -141,11 +144,11 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
 }
 
 bool match_patterns(const std::string& input_line, const std::string& pattern) {
-    if (pattern[0] == '^') {
+    if (!pattern.empty() && pattern[0] == '^') {
         captured_groups.clear();
         return match_pattern(input_line, pattern);
     }
-    for (size_t i = 0; i < input_line.size(); ++i) {
+    for (size_t i = 0; i <= input_line.size(); ++i) {
         captured_groups.clear();
         if (match_pattern(input_line.substr(i), pattern)) {
             return true;
@@ -174,8 +177,8 @@ int main(int argc, char* argv[]) {
         } else {
             return 1;
         }
-    } catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "An error occurred: " << e.what() << std::endl;
         return 1;
     }
 }
