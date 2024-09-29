@@ -4,117 +4,177 @@
 #include <vector>
 using namespace std;
 
-bool match_pattern(const string& input, const string& pattern, size_t in_pos, size_t pat_pos, vector<string>& captures);
+vector<string> captured_groups;
 
-bool match_group(const string& input, const string& pattern, size_t in_pos) {
-    return input.substr(in_pos).find_first_of(pattern) == 0;
+bool match_group(const string& input_line, const string& pattern) {
+    return input_line.find_first_of(pattern) != string::npos;
 }
 
-bool match_alternation(const string& input, const string& pattern, size_t in_pos, vector<string>& captures) {
+bool match_pattern(const std::string& input_line, const std::string& pattern, bool anchored = false);
+
+bool match_alternation(const string& input_line, const string& pattern, bool anchored = false) {
     size_t pipe = pattern.find('|');
     if (pipe == string::npos) {
-        return match_pattern(input, pattern, in_pos, 0, captures);
+        return match_pattern(input_line, pattern, anchored);
     }
-    
     string first = pattern.substr(0, pipe);
     string second = pattern.substr(pipe + 1);
+    return match_pattern(input_line, first, anchored) || match_pattern(input_line, second, anchored);
+}
 
-    vector<string> first_captures = captures;
-    if (match_pattern(input, first, in_pos, 0, first_captures)) {
-        captures = first_captures;
-        return true;
+bool match_pattern(const std::string& input_line, const std::string& pattern, bool anchored = false) {
+    size_t inp_len = input_line.size();
+    size_t patt_len = pattern.size();
+    
+    if (patt_len == 0) return true;
+    if (inp_len == 0) return false; 
+    
+
+    if (pattern[0] == '(') {
+        size_t close_p = pattern.find(')');
+        if (close_p != string::npos) {
+            string group = pattern.substr(1, close_p - 1);
+            if (match_alternation(input_line, group, anchored)) {
+                captured_groups.push_back(input_line.substr(0, group.size()));  // Store captured group
+                return match_pattern(input_line.substr(group.size()), pattern.substr(close_p + 1), anchored);
+            } else {
+                return false;
+            }
+        }
     }
 
-    vector<string> second_captures = captures;
-    if (match_pattern(input, second, in_pos, 0, second_captures)) {
-        captures = second_captures;
-        return true;
+    if (pattern[0] == '\\' && isdigit(pattern[1])) {
+        int group_num = pattern[1] - '0';  // Get the captured group number
+        if (group_num <= captured_groups.size()) {
+            string captured_group = captured_groups[group_num - 1];  // Get the captured group
+            if (input_line.substr(0, captured_group.size()) == captured_group) {
+                return match_pattern(input_line.substr(captured_group.size()), pattern.substr(2), anchored);
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    if (pattern[0] == '.') {
+        // Dot matches any character
+        if (inp_len > 0) {
+            return match_pattern(input_line.substr(1), pattern.substr(1), anchored);
+        } else {
+            return false;
+        }
+    }
+
+
+    if (pattern[0] == '^') {
+        return match_pattern(input_line, pattern.substr(1), true);
+    }
+
+    if (pattern[patt_len - 1] == '$') {
+        if (inp_len >= patt_len - 1 && input_line.substr(inp_len - (patt_len - 1)) == pattern.substr(0, patt_len - 1)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    if (pattern.substr(0, 2) == "\\d") {
+        if (isdigit(input_line[0])) {
+            return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
+        }
+        return false;
+    } else if (pattern.substr(0, 2) == "\\w") {
+        if (isalnum(input_line[0])) {
+            return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
+        }
+        return false;
+    }
+
+    for (size_t j = 0; j < patt_len; ++j) {
+        if (pattern[j] == '?') {
+            if (j == 0) return false;
+            char preceding_char = pattern[j - 1];
+            if (inp_len > 0 && input_line[0] == preceding_char) {
+                return match_pattern(input_line.substr(1), pattern.substr(j + 1), anchored);
+            } else {
+                return match_pattern(input_line, pattern.substr(j + 1), anchored);
+            }
+        }
+    }
+
+    for (size_t i = 0; i < patt_len; ++i) {
+        if (pattern[i] == '+') {
+            if (i == 0) return false;
+            char preceding_char = pattern[i - 1];
+            size_t match_count = 0;
+            while (match_count < inp_len && input_line[match_count] == preceding_char) {
+                match_count++;
+            }
+            if (match_count == 0) return false;
+            return match_pattern(input_line.substr(match_count), pattern.substr(i + 1), anchored);
+        }
+    }
+
+    if (pattern[0] == '[') {
+        auto first = pattern.find(']');
+        bool neg = pattern[1] == '^';
+        if (neg) {
+            if (!match_group(input_line, pattern.substr(2, first - 2))) {
+                return match_pattern(input_line.substr(1), pattern.substr(first + 1), anchored);
+            }
+            return false;
+        }
+        if (match_group(input_line, pattern.substr(1, first - 1))) {
+            return match_pattern(input_line.substr(1), pattern.substr(first + 1), anchored);
+        } else {
+            return false;
+        }
+    }
+
+    if (pattern[0] == input_line[0]) {
+        return match_pattern(input_line.substr(1), pattern.substr(1), anchored);
     }
 
     return false;
 }
 
-bool match_pattern(const string& input, const string& pattern, size_t in_pos, size_t pat_pos, vector<string>& captures) {
-    while (pat_pos < pattern.length()) {
-        if (pattern[pat_pos] == '(') {
-            size_t group_start = in_pos;
-            size_t end_paren = pattern.find(')', pat_pos);
-            if (end_paren == string::npos) return false;
-
-            size_t next_pat_pos = end_paren + 1;
-            while (in_pos <= input.length()) {
-                vector<string> temp_captures = captures;
-                if (match_pattern(input, pattern.substr(pat_pos + 1, end_paren - pat_pos - 1), in_pos, 0, temp_captures) &&
-                    match_pattern(input, pattern, in_pos, next_pat_pos, temp_captures)) {
-                    temp_captures.push_back(input.substr(group_start, in_pos - group_start));
-                    captures = temp_captures;
-                    return true;
-                }
-                in_pos++;
-            }
-            return false;
-        } else if (pattern[pat_pos] == '\\' && isdigit(pattern[pat_pos + 1])) {
-            int backreference = pattern[pat_pos + 1] - '0';
-            if (backreference > 0 && backreference <= captures.size()) {
-                string captured = captures[backreference - 1];
-                if (input.substr(in_pos, captured.length()) == captured) {
-                    in_pos += captured.length();
-                    pat_pos += 2;
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        } else if (pattern[pat_pos] == '|') {
-            return match_alternation(input, pattern.substr(pat_pos), in_pos, captures);
-        } else if (in_pos >= input.length()) {
-            return false;
-        } else if (pattern[pat_pos] == '.') {
-            in_pos++;
-            pat_pos++;
-        } else if (pattern[pat_pos] == input[in_pos]) {
-            in_pos++;
-            pat_pos++;
-        } else {
-            return false;
+bool match_patterns(const std::string& input_line, const std::string& pattern) {
+    if (pattern[0] == '^') {
+        // Match at the beginning of the line (anchored)
+        return match_pattern(input_line, pattern);
+    }
+    for (size_t i = 0; i < input_line.size(); ++i) {
+        if (match_pattern(input_line.substr(i), pattern)) {
+            return true;
         }
     }
-    return in_pos == input.length();
-}
-
-bool match_patterns(const string& input, const string& pattern) {
-    vector<string> captures;
-    return match_pattern(input, pattern, 0, 0, captures);
+    return false;
 }
 
 int main(int argc, char* argv[]) {
-    cout << "Logs from your program will appear here" << endl;
-
+    std::cout << "Logs from your program will appear here" << std::endl;
     if (argc != 3) {
-        cerr << "Expected two arguments" << endl;
+        std::cerr << "Expected two arguments" << std::endl;
         return 1;
     }
-
-    string flag = argv[1];
-    string pattern = argv[2];
-
+    std::string flag = argv[1];
+    std::string pattern = argv[2];
     if (flag != "-E") {
-        cerr << "Expected first argument to be '-E'" << endl;
+        std::cerr << "Expected first argument to be '-E'" << std::endl;
         return 1;
     }
-
-    string input_line;
-    getline(cin, input_line);
-
+    // Get input from stdin
+    std::string input_line;
+    std::getline(std::cin, input_line);
     try {
         if (match_patterns(input_line, pattern)) {
             return 0;
         } else {
             return 1;
         }
-    } catch (const runtime_error& e) {
-        cerr << e.what() << endl;
+    } catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
         return 1;
     }
 }
