@@ -7,6 +7,10 @@ using namespace std;
 
 vector<string> captured_groups;
 
+bool is_word_char(char c) {
+    return isalnum(c) || c == '_';
+}
+
 bool match_group(const string& input_line, const string& pattern) {
     return input_line.find_first_of(pattern) != string::npos;
 }
@@ -35,9 +39,13 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
         if (close_p != string::npos) {
             string group = pattern.substr(1, close_p - 1);
             for (size_t i = 0; i <= inp_len; ++i) {
-                if (i + group.size() <= inp_len && match_alternation(input_line.substr(i, group.size()), group)) {
-                    captured_groups.push_back(input_line.substr(i, group.size()));
-                    if (match_pattern(input_line.substr(i + group.size()), pattern.substr(close_p + 1), anchored)) {
+                size_t match_len = 0;
+                if (match_alternation(input_line.substr(i), group, true)) {
+                    while (match_len + i < inp_len && match_alternation(input_line.substr(i, match_len + 1), group, true)) {
+                        match_len++;
+                    }
+                    captured_groups.push_back(input_line.substr(i, match_len));
+                    if (match_pattern(input_line.substr(i + match_len), pattern.substr(close_p + 1), anchored)) {
                         return true;
                     }
                     captured_groups.pop_back();
@@ -86,7 +94,7 @@ bool match_pattern(const std::string& input_line, const std::string& pattern, bo
             }
             return false;
         } else if (pattern.substr(0, 2) == "\\w") {
-            if (inp_len > 0 && isalnum(input_line[0])) {
+            if (inp_len > 0 && is_word_char(input_line[0])) {
                 return match_pattern(input_line.substr(1), pattern.substr(2), anchored);
             }
             return false;
